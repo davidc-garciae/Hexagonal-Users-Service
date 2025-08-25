@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-
 import lombok.Getter;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -38,11 +37,9 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
   }
 
   static class SimpleAuthToken extends AbstractAuthenticationToken {
-    @Getter
-    private final String userId;
+    @Getter private final String userId;
     private final String email;
-    @Getter
-    private final String role;
+    @Getter private final String role;
 
     SimpleAuthToken(String userId, String email, String role) {
       super(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)));
@@ -61,6 +58,5 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     public Object getPrincipal() {
       return email;
     }
-
   }
 }

@@ -8,13 +8,13 @@ import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import com.pragma.powerup.domain.util.UserValidation;
 
-public class CreateOwnerUseCase {
+public class CreateEmployeeUseCase {
 
     private final IUserPersistencePort userPersistencePort;
     private final IPasswordEncoderPort passwordEncoderPort;
     private final IDateProviderPort dateProviderPort;
 
-    public CreateOwnerUseCase(
+    public CreateEmployeeUseCase(
             IUserPersistencePort userPersistencePort,
             IPasswordEncoderPort passwordEncoderPort,
             IDateProviderPort dateProviderPort) {
@@ -23,8 +23,9 @@ public class CreateOwnerUseCase {
         this.dateProviderPort = dateProviderPort;
     }
 
-    public UserModel createOwner(UserModel request) {
+    public UserModel createEmployee(UserModel request) {
         UserValidation.validateCommonFields(request, dateProviderPort);
+        validateFields(request);
 
         if (userPersistencePort.existsByEmail(request.getEmail())) {
             throw new DomainException("Email already registered");
@@ -35,9 +36,14 @@ public class CreateOwnerUseCase {
 
         String encoded = passwordEncoderPort.encode(request.getPassword());
         request.setPassword(encoded);
-        request.setRole(RoleEnum.OWNER);
+        request.setRole(RoleEnum.EMPLOYEE);
         request.setActive(true);
         return userPersistencePort.save(request);
     }
 
+    private void validateFields(UserModel u) {
+        if (u.getRestaurantId() == null) {
+            throw new DomainException("Restaurant is required for employee");
+        }
+    }
 }

@@ -1,0 +1,67 @@
+graph TB
+  %% HU006 - Employee creation (high-contrast)
+  subgraph "Infrastructure"
+    REST["🌐 UserRestController\n/api/v1/users/employee"]
+    ADAPTER["💾 UserJpaAdapter"]
+    REPO["🏪 IUserRepository\n(JpaRepository)"]
+    ENTITY["🗃️ UserEntity"]
+    CONFIG["⚙️ BeanConfiguration"]
+  end
+
+  subgraph "Application"
+    HANDLER["📋 UserHandler : IUserHandler"]
+    REQ_DTO["📤 UserEmployeeRequestDto"]
+    RES_DTO["📥 UserResponseDto"]
+    REQ_MAP["🔄 IUserRequestMapper"]
+    RES_MAP["🔄 IUserResponseMapper"]
+  end
+
+  subgraph "Domain"
+    MODEL["📊 UserModel"]
+    ROLE["🔖 RoleEnum"]
+    USECASE["⚙️ CreateEmployeeUseCase"]
+    FACADE_UC["⚙️ UserUseCase : IUserServicePort"]
+    PORT_IN["🔌 IUserServicePort"]
+    PORT_PERSIST["🔌 IUserPersistencePort"]
+    PORT_PWD["🔌 IPasswordEncoderPort"]
+    PORT_DATE["🔌 IDateProviderPort"]
+  end
+
+  subgraph "Tests"
+    T_UC["🧪 CreateEmployeeUseCaseTest"]
+    T_MVC["🧪 UserRestControllerWebMvcTest"]
+  end
+
+  %% Flow
+  REST -->|"POST /employee JSON"| HANDLER
+  HANDLER -->|"UserEmployeeRequestDto"| REQ_MAP
+  REQ_MAP -->|"UserModel"| PORT_IN
+  PORT_IN --> FACADE_UC
+  FACADE_UC --> USECASE
+  USECASE -->|"encode()"| PORT_PWD
+  USECASE -->|"today()"| PORT_DATE
+  USECASE -->|"UserModel"| PORT_PERSIST
+  PORT_PERSIST --> ADAPTER
+  ADAPTER --> REPO
+  REPO --> ENTITY
+  USECASE --> MODEL
+  MODEL --- ROLE
+
+  %% Bean configuration (wiring)
+  CONFIG -.-> FACADE_UC
+  CONFIG -.-> ADAPTER
+
+  %% Tests
+  T_UC --> USECASE
+  T_MVC --> REST
+
+  %% Styles (high contrast)
+  classDef infra fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
+  classDef app fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+  classDef domain fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+  classDef tests fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+
+  class REST,ADAPTER,REPO,ENTITY,CONFIG infra
+  class HANDLER,REQ_DTO,RES_DTO,REQ_MAP,RES_MAP app
+  class MODEL,ROLE,USECASE,FACADE_UC,PORT_IN,PORT_PERSIST,PORT_PWD,PORT_DATE domain
+  class T_UC,T_MVC tests

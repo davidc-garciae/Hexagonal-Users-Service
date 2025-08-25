@@ -11,5 +11,4 @@ public enum ExceptionResponse {
   ExceptionResponse() {
     this.message = "No data found for the requested petition";
   }
-
 }

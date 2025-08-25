@@ -15,16 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.mockito.Mock;
-import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthRestController.class)
 @AutoConfigureMockMvc(addFilters = false)
-
 @Import(AuthRestControllerWebMvcTest.MockConfig.class)
 class AuthRestControllerWebMvcTest {
 
@@ -34,7 +32,7 @@ class AuthRestControllerWebMvcTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Mock
+    @Autowired
     private IAuthHandler authHandler;
 
     @TestConfiguration

@@ -1,5 +1,6 @@
 package com.pragma.powerup.application.handler.impl;
 
+import com.pragma.powerup.application.dto.request.UserEmployeeRequestDto;
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
 import com.pragma.powerup.application.handler.IUserHandler;
@@ -23,6 +24,13 @@ public class UserHandler implements IUserHandler {
   public UserResponseDto createOwner(UserRequestDto request) {
     var model = userRequestMapper.toDomain(request);
     var created = userServicePort.createOwner(model);
+    return userResponseMapper.toResponse(created);
+  }
+
+  @Override
+  public UserResponseDto createEmployee(UserEmployeeRequestDto request) {
+    var model = userRequestMapper.toDomain(request);
+    var created = userServicePort.createEmployee(model);
     return userResponseMapper.toResponse(created);
   }
 }

@@ -21,9 +21,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc(addFilters = false)
 class UserRestControllerWebMvcTest {
 
-  @Autowired private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @org.springframework.boot.test.context.TestConfiguration
   static class TestConfig {
@@ -35,7 +37,7 @@ class UserRestControllerWebMvcTest {
 
   @Test
   @DisplayName("POST /api/v1/users/owner returns 201 when valid and ADMIN role")
-  @WithMockUser(roles = {"ADMIN"})
+  @WithMockUser(roles = { "ADMIN" })
   void createOwnerCreated() throws Exception {
     UserRequestDto req = new UserRequestDto();
     req.setFirstName("John");
@@ -49,6 +51,28 @@ class UserRestControllerWebMvcTest {
     mockMvc
         .perform(
             post("/api/v1/users/owner")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("POST /api/v1/users/employee returns 201 when valid and OWNER role")
+  @WithMockUser(roles = { "OWNER" })
+  void createEmployeeCreated() throws Exception {
+    var req = new com.pragma.powerup.application.dto.request.UserEmployeeRequestDto();
+    req.setFirstName("Jane");
+    req.setLastName("Smith");
+    req.setDocument("99887766");
+    req.setPhone("+573114445566");
+    req.setBirthDate(java.time.LocalDate.of(1990, 6, 15));
+    req.setEmail("jane.smith@example.com");
+    req.setPassword("secret");
+    req.setRestaurantId(10L);
+
+    mockMvc
+        .perform(
+            post("/api/v1/users/employee")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isCreated());
