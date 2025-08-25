@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/demo")
 public class SecurityDemoController {
 
-    @GetMapping("/secure")
-    @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<String> secureEndpoint() {
-        return ResponseEntity.ok("secure ok");
-    }
+  @GetMapping("/secure")
+  @PreAuthorize("hasRole('EMPLOYEE')")
+  public ResponseEntity<String> secureEndpoint() {
+    return ResponseEntity.ok("secure ok");
+  }
 }
