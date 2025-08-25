@@ -1,15 +1,15 @@
 package com.pragma.powerup.infrastructure.exceptionhandler;
 
+import lombok.Getter;
+
+@Getter
 public enum ExceptionResponse {
-  NO_DATA_FOUND("No data found for the requested petition");
+  NO_DATA_FOUND();
 
   private final String message;
 
-  ExceptionResponse(String message) {
-    this.message = message;
+  ExceptionResponse() {
+    this.message = "No data found for the requested petition";
   }
 
-  public String getMessage() {
-    return this.message;
-  }
 }

@@ -27,10 +27,10 @@ public class CreateOwnerUseCase {
   public UserModel createOwner(UserModel request) {
     validateFields(request);
 
-    if (Boolean.TRUE.equals(userPersistencePort.existsByEmail(request.getEmail()))) {
+    if (userPersistencePort.existsByEmail(request.getEmail())) {
       throw new DomainException("Email already registered");
     }
-    if (Boolean.TRUE.equals(userPersistencePort.existsByDocument(request.getDocument()))) {
+    if (userPersistencePort.existsByDocument(request.getDocument())) {
       throw new DomainException("Document already registered");
     }
 

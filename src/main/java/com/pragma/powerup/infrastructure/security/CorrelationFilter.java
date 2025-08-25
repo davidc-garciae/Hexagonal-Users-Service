@@ -26,7 +26,7 @@ public class CorrelationFilter extends OncePerRequestFilter {
         Optional.ofNullable(request.getHeader("X-Request-Id")).orElse(UUID.randomUUID().toString());
 
     MDC.put("requestId", requestId);
-    putIfPresent("userId", request.getHeader("X-User-Id"));
+    putIfPresent(request.getHeader("X-User-Id"));
 
     try {
       filterChain.doFilter(request, response);
@@ -35,9 +35,9 @@ public class CorrelationFilter extends OncePerRequestFilter {
     }
   }
 
-  private void putIfPresent(String key, String value) {
+  private void putIfPresent(String value) {
     if (value != null && !value.isBlank()) {
-      MDC.put(key, value);
+      MDC.put("userId", value);
     }
   }
 }
