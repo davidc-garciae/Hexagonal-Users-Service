@@ -10,6 +10,7 @@ public class UserUseCase implements IUserServicePort {
 
   private final CreateOwnerUseCase createOwnerUseCase;
   private final CreateEmployeeUseCase createEmployeeUseCase;
+  private final CreateCustomerUseCase createCustomerUseCase;
 
   public UserUseCase(
       IUserPersistencePort userPersistencePort,
@@ -17,6 +18,7 @@ public class UserUseCase implements IUserServicePort {
       IDateProviderPort dateProviderPort) {
     this.createOwnerUseCase = new CreateOwnerUseCase(userPersistencePort, passwordEncoderPort, dateProviderPort);
     this.createEmployeeUseCase = new CreateEmployeeUseCase(userPersistencePort, passwordEncoderPort, dateProviderPort);
+    this.createCustomerUseCase = new CreateCustomerUseCase(userPersistencePort, passwordEncoderPort, dateProviderPort);
   }
 
   @Override
@@ -27,5 +29,10 @@ public class UserUseCase implements IUserServicePort {
   @Override
   public UserModel createEmployee(UserModel user) {
     return createEmployeeUseCase.createEmployee(user);
+  }
+
+  @Override
+  public UserModel createCustomer(UserModel user) {
+    return createCustomerUseCase.createCustomer(user);
   }
 }

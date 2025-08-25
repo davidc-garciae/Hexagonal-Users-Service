@@ -8,4 +8,6 @@ public interface IUserHandler {
   UserResponseDto createOwner(UserRequestDto request);
 
   UserResponseDto createEmployee(UserEmployeeRequestDto request);
+
+  UserResponseDto createCustomer(UserRequestDto request);
 }

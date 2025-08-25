@@ -19,12 +19,15 @@ public class SecurityConfiguration {
     http.csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers(
-                        "/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/api/v1/auth/login")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
+            auth -> auth.requestMatchers(
+                "/actuator/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/api/v1/auth/login",
+                "/api/v1/users/customer")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
         .addFilterBefore(headerFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }

@@ -10,40 +10,40 @@ import com.pragma.powerup.domain.util.UserValidation;
 
 public class CreateEmployeeUseCase {
 
-    private final IUserPersistencePort userPersistencePort;
-    private final IPasswordEncoderPort passwordEncoderPort;
-    private final IDateProviderPort dateProviderPort;
+  private final IUserPersistencePort userPersistencePort;
+  private final IPasswordEncoderPort passwordEncoderPort;
+  private final IDateProviderPort dateProviderPort;
 
-    public CreateEmployeeUseCase(
-            IUserPersistencePort userPersistencePort,
-            IPasswordEncoderPort passwordEncoderPort,
-            IDateProviderPort dateProviderPort) {
-        this.userPersistencePort = userPersistencePort;
-        this.passwordEncoderPort = passwordEncoderPort;
-        this.dateProviderPort = dateProviderPort;
+  public CreateEmployeeUseCase(
+      IUserPersistencePort userPersistencePort,
+      IPasswordEncoderPort passwordEncoderPort,
+      IDateProviderPort dateProviderPort) {
+    this.userPersistencePort = userPersistencePort;
+    this.passwordEncoderPort = passwordEncoderPort;
+    this.dateProviderPort = dateProviderPort;
+  }
+
+  public UserModel createEmployee(UserModel request) {
+    UserValidation.validateCommonFields(request, dateProviderPort);
+    validateFields(request);
+
+    if (userPersistencePort.existsByEmail(request.getEmail())) {
+      throw new DomainException("Email already registered");
+    }
+    if (userPersistencePort.existsByDocument(request.getDocument())) {
+      throw new DomainException("Document already registered");
     }
 
-    public UserModel createEmployee(UserModel request) {
-        UserValidation.validateCommonFields(request, dateProviderPort);
-        validateFields(request);
+    String encoded = passwordEncoderPort.encode(request.getPassword());
+    request.setPassword(encoded);
+    request.setRole(RoleEnum.EMPLOYEE);
+    request.setActive(true);
+    return userPersistencePort.save(request);
+  }
 
-        if (userPersistencePort.existsByEmail(request.getEmail())) {
-            throw new DomainException("Email already registered");
-        }
-        if (userPersistencePort.existsByDocument(request.getDocument())) {
-            throw new DomainException("Document already registered");
-        }
-
-        String encoded = passwordEncoderPort.encode(request.getPassword());
-        request.setPassword(encoded);
-        request.setRole(RoleEnum.EMPLOYEE);
-        request.setActive(true);
-        return userPersistencePort.save(request);
+  private void validateFields(UserModel u) {
+    if (u.getRestaurantId() == null) {
+      throw new DomainException("Restaurant is required for employee");
     }
-
-    private void validateFields(UserModel u) {
-        if (u.getRestaurantId() == null) {
-            throw new DomainException("Restaurant is required for employee");
-        }
-    }
+  }
 }

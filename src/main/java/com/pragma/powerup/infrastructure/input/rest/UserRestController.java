@@ -4,10 +4,10 @@ import com.pragma.powerup.application.dto.request.UserEmployeeRequestDto;
 import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.dto.response.UserResponseDto;
 import com.pragma.powerup.application.handler.IUserHandler;
+import com.pragma.powerup.infrastructure.security.RoleConstants;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import com.pragma.powerup.infrastructure.security.RoleConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +34,13 @@ public class UserRestController {
   public ResponseEntity<UserResponseDto> createEmployee(
       @Valid @RequestBody UserEmployeeRequestDto request) {
     var response = userHandler.createEmployee(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @PostMapping("/customer")
+  public ResponseEntity<UserResponseDto> createCustomer(
+      @Valid @RequestBody UserRequestDto request) {
+    var response = userHandler.createCustomer(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 }

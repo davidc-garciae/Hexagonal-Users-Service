@@ -6,4 +6,6 @@ public interface IUserServicePort {
   UserModel createOwner(UserModel user);
 
   UserModel createEmployee(UserModel user);
+
+  UserModel createCustomer(UserModel user);
 }

@@ -77,4 +77,24 @@ class UserRestControllerWebMvcTest {
                 .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isCreated());
   }
+
+  @Test
+  @DisplayName("POST /api/v1/users/customer returns 201 (public)")
+  void createCustomerCreated() throws Exception {
+    UserRequestDto req = new UserRequestDto();
+    req.setFirstName("Alice");
+    req.setLastName("Brown");
+    req.setDocument("12345678");
+    req.setPhone("+573001234567");
+    req.setBirthDate(java.time.LocalDate.of(1995, 5, 20));
+    req.setEmail("alice.brown@example.com");
+    req.setPassword("secret");
+
+    mockMvc
+        .perform(
+            post("/api/v1/users/customer")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isCreated());
+  }
 }

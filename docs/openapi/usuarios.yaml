@@ -64,10 +64,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+  /api/v1/users/customer:
+    post:
+      tags: [Users]
+      summary: Create customer account (public)
+      description: Self-registration endpoint for customers. No authentication required.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
   /api/v1/usuarios/cliente:
     post:
       tags: [Usuarios]
-      summary: Crear usuario cliente
+      summary: Crear usuario cliente (deprecated - use /api/v1/users/customer)
+      deprecated: true
       requestBody:
         required: true
         content:

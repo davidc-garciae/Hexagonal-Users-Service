@@ -33,4 +33,11 @@ public class UserHandler implements IUserHandler {
     var created = userServicePort.createEmployee(model);
     return userResponseMapper.toResponse(created);
   }
+
+  @Override
+  public UserResponseDto createCustomer(UserRequestDto request) {
+    var model = userRequestMapper.toDomain(request);
+    var created = userServicePort.createCustomer(model);
+    return userResponseMapper.toResponse(created);
+  }
 }
