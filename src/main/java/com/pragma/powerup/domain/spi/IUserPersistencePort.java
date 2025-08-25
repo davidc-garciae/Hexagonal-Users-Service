@@ -8,4 +8,6 @@ public interface IUserPersistencePort {
   boolean existsByDocument(String document);
 
   UserModel save(UserModel user);
+
+  UserModel findByEmail(String email);
 }

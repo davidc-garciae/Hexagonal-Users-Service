@@ -128,5 +128,3 @@ class CreateOwnerUseCaseTest {
         .hasMessageContaining("Email already registered");
   }
 }
-
-

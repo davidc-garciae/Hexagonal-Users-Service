@@ -23,5 +23,3 @@ public class UserUseCase implements IUserServicePort {
     return createOwnerUseCase.createOwner(user);
   }
 }
-
-

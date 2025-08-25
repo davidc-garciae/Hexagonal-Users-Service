@@ -19,7 +19,8 @@ public class SecurityConfiguration {
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**")
+                auth.requestMatchers(
+                        "/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/api/v1/auth/login")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

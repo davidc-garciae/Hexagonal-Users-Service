@@ -1,0 +1,60 @@
+graph TB
+  %% HU005 - Authentication (high-contrast)
+
+  subgraph "Infrastructure"
+    AUTH_CTRL["🌐 AuthRestController\n/api/v1/auth/login"]
+    JWT_SVC["🔐 JwtService : IJwtProviderPort"]
+    ADAPTER["💾 UserJpaAdapter : IUserPersistencePort"]
+    REPO["🏪 IUserRepository (JpaRepository)"]
+    CONFIG["⚙️ BeanConfiguration"]
+  end
+
+  subgraph "Application"
+    HANDLER["📋 AuthHandler : IAuthHandler"]
+    REQ_DTO["📤 LoginRequestDto"]
+    RES_DTO["📥 AuthResponseDto"]
+  end
+
+  subgraph "Domain"
+    USECASE["⚙️ AuthenticateUserUseCase : IAuthServicePort"]
+    USER["📊 UserModel"]
+    ROLE["🔖 RoleEnum"]
+    PORT_USER["🔌 IUserPersistencePort"]
+    PORT_PWD["🔌 IPasswordEncoderPort"]
+    PORT_JWT["🔌 IJwtProviderPort"]
+  end
+
+  subgraph "Tests"
+    T_DOMAIN["🧪 AuthenticateUserUseCaseTest"]
+    T_MVC["🧪 AuthRestControllerWebMvcTest"]
+  end
+
+  %% Flow
+  AUTH_CTRL -->|"POST /login JSON"| HANDLER
+  HANDLER -->|"LoginRequestDto"| USECASE
+  USECASE -->|"findByEmail()"| PORT_USER
+  USECASE -->|"matches()"| PORT_PWD
+  HANDLER -->|"generateToken()"| PORT_JWT
+  PORT_JWT --> JWT_SVC
+  PORT_USER --> ADAPTER
+  ADAPTER --> REPO
+  USECASE --> USER
+  USER --- ROLE
+  HANDLER --> RES_DTO
+  CONFIG -.-> USECASE
+  CONFIG -.-> ADAPTER
+
+  %% Tests targeting
+  T_DOMAIN --> USECASE
+  T_MVC --> AUTH_CTRL
+
+  %% Styles (high contrast)
+  classDef infra fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
+  classDef app fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+  classDef domain fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+  classDef tests fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+
+  class AUTH_CTRL,JWT_SVC,ADAPTER,REPO,CONFIG infra
+  class HANDLER,REQ_DTO,RES_DTO app
+  class USECASE,USER,ROLE,PORT_USER,PORT_PWD,PORT_JWT domain
+  class T_DOMAIN,T_MVC tests

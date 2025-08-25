@@ -29,4 +29,9 @@ public class UserJpaAdapter implements IUserPersistencePort {
     UserEntity saved = userRepository.save(entity);
     return userEntityMapper.toDomain(saved);
   }
+
+  @Override
+  public UserModel findByEmail(String email) {
+    return userRepository.findByEmail(email).map(userEntityMapper::toDomain).orElse(null);
+  }
 }

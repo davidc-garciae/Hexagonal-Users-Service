@@ -17,13 +17,14 @@ class HexagonalArchitectureTest {
 
   @BeforeAll
   static void loadClasses() {
-    classes = new ClassFileImporter()
-        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_JARS)
-        .importPackages(
-            "com.pragma.powerup.domain",
-            "com.pragma.powerup.application",
-            "com.pragma.powerup.infrastructure");
+    classes =
+        new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_JARS)
+            .importPackages(
+                "com.pragma.powerup.domain",
+                "com.pragma.powerup.application",
+                "com.pragma.powerup.infrastructure");
   }
 
   private ArchRule allowEmpty(ArchRule rule) {
