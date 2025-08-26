@@ -62,6 +62,68 @@ Variables relevantes (application.yml/env):
 -   WebMvc: `AuthRestControllerWebMvcTest`, `UserRestControllerWebMvcTest`
 -   Arquitectura: `HexagonalArchitectureTest`
 
+## Integraciones con otros microservicios
+
+-   Dependencias síncronas (salientes)
+
+    -   No aplica por defecto. Este servicio no invoca a otros microservicios.
+
+-   Endpoints expuestos para otros servicios
+
+    -   `GET /api/v1/usuarios/{id}` → obtener usuario por id (orders, restaurants, messaging, traceability)
+    -   `GET /api/v1/usuarios/{id}/activo` → validar si el usuario está activo
+    -   Opcionales (según necesidades de negocio):
+        -   `GET /api/v1/usuarios/validar-empleado/{empleadoId}/restaurante/{restauranteId}`
+        -   `GET /api/v1/usuarios/validar-propietario/{propietarioId}/restaurante/{restauranteId}`
+    -   Contrato: ver `docs/openapi/usuarios.yaml`.
+
+-   Consumo (cómo otros servicios deben configurarse)
+
+    -   Dependencia: `org.springframework.cloud:spring-cloud-starter-openfeign`
+    -   `application.yml` (timeouts/URL):
+        ```yaml
+        feign:
+            client:
+                config:
+                    default:
+                        connectTimeout: 3000
+                        readTimeout: 5000
+                        loggerLevel: basic
+        microservices:
+            users:
+                url: ${MICROSERVICES_USERS_URL:http://localhost:8081}
+        ```
+    -   Variable de entorno sugerida: `MICROSERVICES_USERS_URL=http://localhost:8081`
+    -   Interfaz Feign de ejemplo (en servicios consumidores):
+        ```java
+        @FeignClient(name = "users-service", url = "${microservices.users.url}")
+        interface UsersServiceClient {
+          @GetMapping("/api/v1/usuarios/{id}")
+          UsuarioResponseDto getUser(@PathVariable Long id);
+          @GetMapping("/api/v1/usuarios/{id}/activo")
+          Boolean isActive(@PathVariable Long id);
+        }
+        ```
+
+-   Seguridad y Gateway
+
+    -   Externo: el Gateway valida JWT y propaga `X-User-*`.
+    -   Servicio-a-servicio: usar un `RequestInterceptor` Feign para inyectar `Authorization: Bearer <token>` o, si se permite, headers `X-User-*` de un usuario técnico.
+
+-   Asíncrono (mensajería)
+
+    -   No aplica (este servicio no publica ni consume eventos en esta versión).
+
+-   Opcional (Service Discovery/Config Server)
+
+    -   Service Discovery (Eureka): usar `lb://users-service` en lugar de URL fija.
+    -   Config Server: externalizar propiedades y rutas Feign.
+
+-   Checklist para producción
+    -   [ ] Endpoints de validación expuestos y documentados (OpenAPI actualizado)
+    -   [ ] Consumidores con timeouts/retries y logs/metricas de integraciones
+    -   [ ] Seguridad servicio-a-servicio definida (token técnico o mTLS) según política
+
 ## Convenciones y CI
 
 -   Formato: Spotless (Google Java Format)

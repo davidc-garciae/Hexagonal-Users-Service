@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: mensajeria-service API
+  title: messaging-service API
   version: 1.0.0
   description: API de notificaciones (SMS)
 servers:
@@ -33,5 +33,3 @@ components:
       properties:
         telefono: { type: string, maxLength: 13 }
         mensaje: { type: string, maxLength: 160 }
-
-
