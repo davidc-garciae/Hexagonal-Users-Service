@@ -132,26 +132,10 @@ tasks.register('openApiValidateUsers', org.openapitools.generator.gradle.plugin.
 	inputSpec.set("${oasDir}/users.yaml")
 }
 
-tasks.register('openApiValidateRestaurants', org.openapitools.generator.gradle.plugin.tasks.ValidateTask) {
-	inputSpec.set("${oasDir}/restaurants.yaml")
-}
-
-tasks.register('openApiValidateOrders', org.openapitools.generator.gradle.plugin.tasks.ValidateTask) {
-	inputSpec.set("${oasDir}/orders.yaml")
-}
-
-tasks.register('openApiValidateTraceability', org.openapitools.generator.gradle.plugin.tasks.ValidateTask) {
-	inputSpec.set("${oasDir}/traceability.yaml")
-}
-
-tasks.register('openApiValidateMessaging', org.openapitools.generator.gradle.plugin.tasks.ValidateTask) {
-	inputSpec.set("${oasDir}/messaging.yaml")
-}
-
 tasks.register('openApiValidateAll') {
 	group = 'verification'
 	description = 'Valida todos los contratos OpenAPI en docs/openapi'
-	dependsOn 'openApiValidateUsers', 'openApiValidateRestaurants', 'openApiValidateOrders', 'openApiValidateTraceability', 'openApiValidateMessaging'
+	dependsOn 'openApiValidateUsers'
 }
 
 // ---- Auditoría de dependencias (OWASP) ----

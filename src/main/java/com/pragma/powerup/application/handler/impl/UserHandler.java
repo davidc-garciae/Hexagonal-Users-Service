@@ -40,4 +40,15 @@ public class UserHandler implements IUserHandler {
     var created = userServicePort.createCustomer(model);
     return userResponseMapper.toResponse(created);
   }
+
+  @Override
+  public UserResponseDto getUserById(Long id) {
+    var user = userServicePort.getUserById(id);
+    return userResponseMapper.toResponse(user);
+  }
+
+  @Override
+  public boolean isEmployeeOfRestaurant(Long userId, Long restaurantId) {
+    return userServicePort.isEmployeeOfRestaurant(userId, restaurantId);
+  }
 }

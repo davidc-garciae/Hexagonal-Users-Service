@@ -124,6 +124,53 @@ paths:
             application/json:
               schema:
                 type: boolean
+  /api/v1/users/{userId}/restaurant/{restaurantId}/is-employee:
+    get:
+      tags: [Validations]
+      summary: Validate if user is employee of specific restaurant
+      description: |
+        Critical endpoint for HU-012 security validation.
+        Validates if a given user ID has EMPLOYEE role and is assigned to the specified restaurant.
+        Used by Orders Service to enforce restaurant-based access control.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: ID of the user to validate
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: restaurantId
+          required: true
+          description: ID of the restaurant to check assignment
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: boolean
+                description: true if user is employee of the restaurant, false otherwise
+        '400':
+          description: Bad request (invalid parameters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -184,3 +231,16 @@ components:
         correo: { type: string }
         rol: { type: string, enum: [ADMINISTRADOR, PROPIETARIO, EMPLEADO, CLIENTE] }
         activo: { type: boolean }
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when error occurred
+        status:
+          type: integer
+          description: HTTP status code

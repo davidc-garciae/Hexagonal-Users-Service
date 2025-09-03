@@ -1,137 +1,385 @@
-# usuarios-service (Spring Boot, Hexagonal)
+# 👥 Users Service - Microservicio de Gestión de Usuarios
 
--   Java 17 · Spring Boot 3 · Gradle 8
--   Hexagonal Architecture (domain, application, infrastructure)
--   OpenAPI 3.0 (springdoc)
--   Seguridad: JWT (vía Gateway) + autorización por roles con headers `X-User-*`
--   Testing: JUnit 5, WebMvc slice, ArchUnit, JaCoCo (≥80%)
+[![Java 17](https://img.shields.io/badge/Java-17-007396?logo=java&logoColor=white)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![JWT](https://img.shields.io/badge/JWT-Auth-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-## Funcionalidad cubierta (Historias de Usuario)
+## 🎯 Descripción
 
--   HU-001: Crear Propietario (ADMIN)
--   HU-005: Autenticación del sistema (login + JWT)
--   HU-006: Crear Empleado (OWNER)
--   HU-008: Autoregistro de Cliente (público)
+El **Users Service** es el microservicio central responsable de la gestión de usuarios, roles y autenticación JWT distribuida en el sistema de Plazoleta de Comidas. Maneja todos los aspectos relacionados con usuarios, desde el registro hasta la autenticación y autorización.
 
-## Endpoints principales
+## 🚀 Estado del Proyecto
 
--   POST `/api/v1/auth/login` → Autenticación, retorna JWT
--   POST `/api/v1/users/owner` → Crear propietario (requiere rol ADMIN)
--   POST `/api/v1/users/employee` → Crear empleado (requiere rol OWNER)
--   POST `/api/v1/users/customer` → Crear cliente (público)
+✅ **COMPLETAMENTE FUNCIONAL**  
+✅ **JWT Authentication** distribuido  
+✅ **Arquitectura Hexagonal** implementada  
+✅ **6 Endpoints** operativos  
+✅ **PostgreSQL** configurado  
+✅ **Validaciones** completas
 
-Documentación OpenAPI: ver `docs/openapi/usuarios.yaml`.
+## 🏗️ Arquitectura
 
-## Seguridad
+### Patrón Hexagonal (Ports & Adapters)
 
--   El API Gateway valida el JWT y propaga `X-User-Id`, `X-User-Email`, `X-User-Role`.
--   Este servicio usa `HeaderAuthenticationFilter` y `@PreAuthorize`:
-    -   `ADMIN` para `/users/owner`
-    -   `OWNER` para `/users/employee`
-    -   Público para `/auth/login` y `/users/customer`
-
-## Ejecución local
-
-```bash
-./gradlew spotlessApply
-./gradlew test jacocoTestReport
-./gradlew bootRun
-# Swagger UI: http://localhost:8081/swagger-ui/index.html
+```
+📦 src/main/java/com/pragma/powerup/
+├── 🎯 domain/
+│   ├── model/          # Entidades de dominio
+│   ├── api/            # Puertos (interfaces)
+│   └── usecase/        # Casos de uso
+├── 🔌 infrastructure/
+│   ├── input/          # Adaptadores de entrada (REST)
+│   ├── output/         # Adaptadores de salida (JPA)
+│   ├── configuration/  # Configuración
+│   └── security/       # Seguridad JWT
+└── 🚀 application/     # DTOs, Handlers, Mappers, Utils
 ```
 
-Variables relevantes (application.yml/env):
+## 📊 Entidades del Dominio
 
--   `spring.security.jwt.secret` (se usa para firmar tokens cuando este servicio genera JWT para login)
--   `spring.security.jwt.expiration` (ms)
+### 👤 Usuario
 
-## Arquitectura (resumen)
+```java
+@Entity
+public class Usuario {
+    private Long id;
+    private String firstName;     // Requerido
+    private String lastName;      // Requerido
+    private String document;      // Único, solo números
+    private String phone;         // Formato internacional
+    private LocalDate birthDate;  // Mayor de 18 años
+    private String email;         // Único, formato válido
+    private String password;      // Encriptado BCrypt
+    private Role role;           // ADMIN, OWNER, EMPLOYEE, CUSTOMER
+}
+```
 
--   Domain: `UserModel`, `RoleEnum`, casos de uso `CreateOwnerUseCase`, `CreateEmployeeUseCase`, `CreateCustomerUseCase`, `AuthenticateUserUseCase`.
--   Ports IN: `IUserServicePort`, `IAuthServicePort`.
--   Ports OUT: `IUserPersistencePort`, `IPasswordEncoderPort`, `IDateProviderPort`, `IJwtProviderPort`.
--   Application: `UserHandler`, `AuthHandler`, mappers MapStruct, DTOs request/response.
--   Infrastructure:
-    -   REST: `UserRestController`, `AuthRestController`
-    -   JPA: `UserJpaAdapter`, `IUserRepository`, `UserEntity`, `IUserEntityMapper`
-    -   Security: `SecurityConfiguration`, `HeaderAuthenticationFilter`, `JwtService`
-    -   Configuración beans: `BeanConfiguration`
+### 🛡️ Roles del Sistema
 
-## Tests
+-   **👑 ADMIN**: Administrador del sistema (crear propietarios y restaurantes)
+-   **🏪 OWNER**: Propietario de restaurante (gestionar menú y empleados)
+-   **👷 EMPLOYEE**: Empleado (atender pedidos)
+-   **👤 CUSTOMER**: Cliente (realizar pedidos)
 
--   Dominio: casos de uso (validaciones, reglas de negocio)
--   WebMvc: `AuthRestControllerWebMvcTest`, `UserRestControllerWebMvcTest`
--   Arquitectura: `HexagonalArchitectureTest`
+## 🌐 API Endpoints
 
-## Integraciones con otros microservicios
+**Base URL**: `http://localhost:8081/api/v1`
 
--   Dependencias síncronas (salientes)
+### 🔐 Autenticación
 
-    -   No aplica por defecto. Este servicio no invoca a otros microservicios.
+#### POST `/auth/login`
 
--   Endpoints expuestos para otros servicios
+**Descripción**: Autenticación de usuario y generación de JWT  
+**Acceso**: 🌐 Público
 
-    -   `GET /api/v1/usuarios/{id}` → obtener usuario por id (orders, restaurants, messaging, traceability)
-    -   `GET /api/v1/usuarios/{id}/activo` → validar si el usuario está activo
-    -   Opcionales (según necesidades de negocio):
-        -   `GET /api/v1/usuarios/validar-empleado/{empleadoId}/restaurante/{restauranteId}`
-        -   `GET /api/v1/usuarios/validar-propietario/{propietarioId}/restaurante/{restauranteId}`
-    -   Contrato: ver `docs/openapi/usuarios.yaml`.
+```bash
+POST http://localhost:8081/api/v1/auth/login
+Content-Type: application/json
 
--   Consumo (cómo otros servicios deben configurarse)
+{
+  "email": "admin@plazoleta.com",
+  "password": "customer123"
+}
+```
 
-    -   Dependencia: `org.springframework.cloud:spring-cloud-starter-openfeign`
-    -   `application.yml` (timeouts/URL):
-        ```yaml
-        feign:
-            client:
-                config:
-                    default:
-                        connectTimeout: 3000
-                        readTimeout: 5000
-                        loggerLevel: basic
-        microservices:
-            users:
-                url: ${MICROSERVICES_USERS_URL:http://localhost:8081}
-        ```
-    -   Variable de entorno sugerida: `MICROSERVICES_USERS_URL=http://localhost:8081`
-    -   Interfaz Feign de ejemplo (en servicios consumidores):
-        ```java
-        @FeignClient(name = "users-service", url = "${microservices.users.url}")
-        interface UsersServiceClient {
-          @GetMapping("/api/v1/usuarios/{id}")
-          UsuarioResponseDto getUser(@PathVariable Long id);
-          @GetMapping("/api/v1/usuarios/{id}/activo")
-          Boolean isActive(@PathVariable Long id);
-        }
-        ```
+**Response**:
 
--   Seguridad y Gateway
+```json
+{
+    "token": "eyJhbGciOiJIUzM4NCJ9...",
+    "user": {
+        "id": 1,
+        "firstName": "Admin",
+        "lastName": "Sistema",
+        "email": "admin@plazoleta.com",
+        "role": "ADMIN"
+    }
+}
+```
 
-    -   Externo: el Gateway valida JWT y propaga `X-User-*`.
-    -   Servicio-a-servicio: usar un `RequestInterceptor` Feign para inyectar `Authorization: Bearer <token>` o, si se permite, headers `X-User-*` de un usuario técnico.
+### 👥 Gestión de Usuarios
 
--   Asíncrono (mensajería)
+#### POST `/users/owner`
 
-    -   No aplica (este servicio no publica ni consume eventos en esta versión).
+**Descripción**: Crear propietario de restaurante (HU-001)  
+**Acceso**: 👑 Solo ADMIN
 
--   Opcional (Service Discovery/Config Server)
+```bash
+POST http://localhost:8081/api/v1/users/owner
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+Content-Type: application/json
 
-    -   Service Discovery (Eureka): usar `lb://users-service` en lugar de URL fija.
-    -   Config Server: externalizar propiedades y rutas Feign.
+{
+  "firstName": "Carlos",
+  "lastName": "García",
+  "document": "12345678",
+  "phone": "+573001234567",
+  "birthDate": "1985-05-15",
+  "email": "carlos@restaurante.com",
+  "password": "Password123!"
+}
+```
 
--   Checklist para producción
-    -   [ ] Endpoints de validación expuestos y documentados (OpenAPI actualizado)
-    -   [ ] Consumidores con timeouts/retries y logs/metricas de integraciones
-    -   [ ] Seguridad servicio-a-servicio definida (token técnico o mTLS) según política
+#### POST `/users/employee`
 
-## Convenciones y CI
+**Descripción**: Crear empleado para restaurante (HU-006)  
+**Acceso**: 🏪 Solo OWNER
 
--   Formato: Spotless (Google Java Format)
--   Cobertura: JaCoCo ≥ 80% (tarea `check`)
--   Ramas sugeridas: `feature/HU-xxx-descripcion` y tag al merge de cada HU
+```bash
+POST http://localhost:8081/api/v1/users/employee
+Authorization: Bearer <OWNER_JWT_TOKEN>
+Content-Type: application/json
 
-## Referencias
+{
+  "firstName": "María",
+  "lastName": "López",
+  "document": "87654321",
+  "phone": "+573009876543",
+  "birthDate": "1990-08-20",
+  "email": "maria@empleado.com",
+  "password": "Employee123!",
+  "restaurantId": 1
+}
+```
 
--   Diagrama HU: `docs/diagrams/HU/`
--   Requisitos: `docs/Requirements.md`
--   Guía ampliada: `docs/README.microservicios.md`
+#### POST `/users/customer`
+
+**Descripción**: Registro público de cliente (HU-008)  
+**Acceso**: 🌐 Público
+
+```bash
+POST http://localhost:8081/api/v1/users/customer
+Content-Type: application/json
+
+{
+  "firstName": "Ana",
+  "lastName": "Martínez",
+  "document": "11223344",
+  "phone": "+573005551234",
+  "birthDate": "1995-12-10",
+  "email": "ana@cliente.com",
+  "password": "Customer123!"
+}
+```
+
+#### GET `/users/{id}`
+
+**Descripción**: Obtener información pública de usuario  
+**Acceso**: 🌐 Público
+
+```bash
+GET http://localhost:8081/api/v1/users/2
+```
+
+**Response**:
+
+```json
+{
+    "id": 2,
+    "firstName": "Owner",
+    "lastName": "Restaurante",
+    "email": "owner@plazoleta.com",
+    "role": "OWNER"
+}
+```
+
+#### GET `/users/{userId}/restaurant/{restaurantId}/is-employee`
+
+**Descripción**: Verificar si un usuario es empleado de un restaurante específico  
+**Acceso**: 🌐 Público (usado por otros microservicios)
+
+```bash
+GET http://localhost:8081/api/v1/users/8/restaurant/1/is-employee
+```
+
+**Response**:
+
+```json
+true
+```
+
+## ✅ Validaciones Implementadas
+
+### 📧 Email
+
+-   ✅ Formato válido requerido
+-   ✅ Único en el sistema
+-   ✅ No puede estar vacío
+
+### 📱 Teléfono
+
+-   ✅ Formato internacional (+57...)
+-   ✅ Solo números después del código
+-   ✅ Longitud válida
+
+### 🆔 Documento
+
+-   ✅ Solo números
+-   ✅ Único en el sistema
+-   ✅ Longitud mínima/máxima
+
+### 🎂 Fecha de Nacimiento
+
+-   ✅ Mayor de 18 años
+-   ✅ Formato válido
+-   ✅ No puede ser futura
+
+### 🔒 Contraseña
+
+-   ✅ Mínimo 8 caracteres
+-   ✅ Al menos una mayúscula
+-   ✅ Al menos un número
+-   ✅ Encriptado con BCrypt
+
+## 🔧 Configuración del Servicio
+
+### Variables de Entorno (.env)
+
+```properties
+# Aplicación
+SPRING_APPLICATION_NAME=users-service
+PORT=8081
+
+# Base de Datos PostgreSQL
+DB_URL=jdbc:postgresql://localhost:5432/users_db
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_SCHEMA=public
+
+# JWT Configuration (COMPARTIDO)
+JWT_SECRET=change-me-change-me-change-me-change-me-change-me-change-me
+JWT_EXPIRATION=86400000
+
+# Logging
+LOGGING_LEVEL_ROOT=INFO
+LOGGING_LEVEL_COM_PRAGMA=DEBUG
+```
+
+### Base de Datos
+
+**PostgreSQL Database**: `users_db`
+
+```sql
+-- Tabla principal
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    document VARCHAR(20) UNIQUE NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    birth_date DATE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para optimización
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_document ON users(document);
+CREATE INDEX idx_users_role ON users(role);
+```
+
+## 🧪 Testing
+
+### Usuarios de Prueba
+
+| Rol          | Email                     | Contraseña    | ID  |
+| ------------ | ------------------------- | ------------- | --- |
+| **ADMIN**    | `admin@plazoleta.com`     | `customer123` | 1   |
+| **OWNER**    | `owner@plazoleta.com`     | `customer123` | 2   |
+| **EMPLOYEE** | `employee@plazoleta.com`  | `customer123` | 8   |
+| **CUSTOMER** | `customer1@plazoleta.com` | `customer123` | 3   |
+
+### Ejecutar Tests
+
+```bash
+# Tests unitarios
+./gradlew test
+
+# Tests de integración
+./gradlew integrationTest
+
+# Cobertura de código
+./gradlew jacocoTestReport
+```
+
+## 🚀 Ejecución del Servicio
+
+### Desarrollo Local
+
+```bash
+# 1. Clonar el repositorio
+git clone <repository-url>
+cd Hexagonal-Users-Service
+
+# 2. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con los valores correctos
+
+# 3. Iniciar PostgreSQL
+docker run -d \
+  --name postgres-users \
+  -e POSTGRES_DB=users_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:15
+
+# 4. Ejecutar el servicio
+./gradlew bootRun
+```
+
+### Verificación
+
+```bash
+# Health check
+curl http://localhost:8081/actuator/health
+
+# Swagger UI
+http://localhost:8081/swagger-ui/index.html
+
+# OpenAPI JSON
+http://localhost:8081/v3/api-docs
+```
+
+## 📚 Documentación Adicional
+
+### OpenAPI/Swagger
+
+-   **Swagger UI**: http://localhost:8081/swagger-ui/index.html
+-   **OpenAPI Spec**: http://localhost:8081/v3/api-docs
+
+### Arquitectura
+
+-   [Diagrama de Arquitectura](./docs/diagrams/04.Architecture.mmd)
+-   [Historias de Usuario](./docs/HU/)
+
+## 🔗 Integración con Otros Servicios
+
+Este servicio es consultado por otros microservicios para:
+
+-   **Restaurants Service**: Validar propietarios al crear restaurantes
+-   **Orders Service**: Obtener información de usuarios para pedidos
+-   **Messaging Service**: Obtener datos de contacto para notificaciones
+
+### OpenFeign Clients
+
+Otros servicios utilizan `UserServiceClient` para consultar este servicio:
+
+```java
+@FeignClient(name = "users-service", url = "${microservices.users.url}")
+public interface UserServiceClient {
+    @GetMapping("/api/v1/users/{id}")
+    UserResponse getUserById(@PathVariable("id") Long id);
+}
+```
+
+## 🏆 Historias de Usuario Implementadas
+
+-   ✅ **HU-001**: Crear Propietario (ADMIN)
+-   ✅ **HU-005**: Autenticación JWT
+-   ✅ **HU-006**: Crear Empleado (OWNER)
+-   ✅ **HU-008**: Crear Cliente

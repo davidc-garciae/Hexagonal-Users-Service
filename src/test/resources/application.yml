@@ -22,3 +22,8 @@ springdoc:
 # Placeholders requeridos por OpenApiConfiguration en pruebas
 appdescription: "API PowerUp (tests)"
 appversion: "0.0.0-test"
+
+# JWT Configuration for tests
+jwt:
+  secret: "change-me-change-me-change-me-change-me-change-me-change-me"
+  expiration: 86400000

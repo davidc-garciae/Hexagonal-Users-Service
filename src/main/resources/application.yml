@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8080}
+  port: ${PORT:8081}
 
 spring:
   application:
@@ -19,14 +19,25 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-  security:
-    jwt:
-      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
-      expiration: ${JWT_EXPIRATION:86400000}
+jwt:
+  secret: ${JWT_SECRET:mi-secreto-super-seguro-para-jwt-en-todos-los-servicios-2024}
+  expiration: ${JWT_EXPIRATION:86400000}
+
 management:
   tracing:
     sampling:
       probability: 1.0
+
+# Microservices URLs (Feign/Integrations)
+microservices:
+  users:
+    url: ${MICROSERVICES_USERS_URL:http://localhost:8081}
+  orders:
+    url: ${MICROSERVICES_ORDERS_URL:http://localhost:8082}
+  messaging:
+    url: ${MICROSERVICES_MESSAGING_URL:http://localhost:8083}
+  restaurants:
+    url: ${MICROSERVICES_RESTAURANTS_URL:http://localhost:8084}
 
 otel:
   exporter:

@@ -10,4 +10,6 @@ public interface IUserPersistencePort {
   UserModel save(UserModel user);
 
   UserModel findByEmail(String email);
+
+  UserModel findById(Long id);
 }

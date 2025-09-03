@@ -17,8 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class BeanConfiguration {
 
-  // Removed Object* demo beans
-
   @Bean
   public IUserPersistencePort userPersistencePort(
       IUserRepository userRepository, IUserEntityMapper userEntityMapper) {

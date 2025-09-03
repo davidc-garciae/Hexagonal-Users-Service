@@ -8,4 +8,8 @@ public interface IUserServicePort {
   UserModel createEmployee(UserModel user);
 
   UserModel createCustomer(UserModel user);
+
+  UserModel getUserById(Long id);
+
+  boolean isEmployeeOfRestaurant(Long userId, Long restaurantId);
 }

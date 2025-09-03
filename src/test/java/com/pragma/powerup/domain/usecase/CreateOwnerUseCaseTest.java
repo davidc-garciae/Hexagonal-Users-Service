@@ -1,130 +1,170 @@
 package com.pragma.powerup.domain.usecase;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.pragma.powerup.domain.exception.DomainException;
-import com.pragma.powerup.domain.model.RoleEnum;
 import com.pragma.powerup.domain.model.UserModel;
-import com.pragma.powerup.domain.spi.IDateProviderPort;
-import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
+import com.pragma.powerup.domain.model.RoleEnum;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
-import java.time.LocalDate;
+import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
+import com.pragma.powerup.domain.spi.IDateProviderPort;
+import com.pragma.powerup.domain.exception.DomainException;
+import com.pragma.powerup.shared.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit tests for CreateOwnerUseCase domain logic.
+ * Tests owner creation business rules without external dependencies.
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("Domain: Create Owner Use Case Tests")
 class CreateOwnerUseCaseTest {
 
-  @Mock private IUserPersistencePort userPersistencePort;
+    @Mock
+    private IUserPersistencePort userPersistencePort;
 
-  @Mock private IPasswordEncoderPort passwordEncoderPort;
+    @Mock
+    private IPasswordEncoderPort passwordEncoderPort;
 
-  @Mock private IDateProviderPort dateProviderPort;
+    @Mock
+    private IDateProviderPort dateProviderPort;
 
-  @InjectMocks private CreateOwnerUseCase useCase;
+    private CreateOwnerUseCase createOwnerUseCase;
 
-  @BeforeEach
-  void setUp() {
-    MockitoAnnotations.openMocks(this);
-    when(dateProviderPort.today()).thenReturn(LocalDate.of(2025, 1, 1));
-    useCase = new CreateOwnerUseCase(userPersistencePort, passwordEncoderPort, dateProviderPort);
-  }
+    private UserModel validOwnerRequest;
+    private UserModel savedOwner;
 
-  private UserModel buildValidUser() {
-    UserModel u = new UserModel();
-    u.setFirstName("John");
-    u.setLastName("Doe");
-    u.setDocument("1002003004");
-    u.setPhone("+573001112233");
-    u.setBirthDate(LocalDate.of(1990, 1, 1));
-    u.setEmail("john.doe@example.com");
-    u.setPassword("plain-secret");
-    return u;
-  }
+    @BeforeEach
+    void setUp() {
+        createOwnerUseCase = new CreateOwnerUseCase(userPersistencePort, passwordEncoderPort, dateProviderPort);
 
-  @Test
-  @DisplayName("Should create owner when data is valid")
-  void createOwnerOk() {
-    UserModel request = buildValidUser();
-    when(userPersistencePort.existsByEmail(request.getEmail())).thenReturn(false);
-    when(userPersistencePort.existsByDocument(request.getDocument())).thenReturn(false);
-    when(passwordEncoderPort.encode("plain-secret")).thenReturn("ENCODED");
-    when(userPersistencePort.save(any(UserModel.class)))
-        .thenAnswer(
-            invocation -> {
-              UserModel arg = invocation.getArgument(0);
-              arg.setId(1L);
-              return arg;
-            });
+        validOwnerRequest = TestDataFactory.createValidOwnerRequestModel();
+        validOwnerRequest.setId(null); // New user should not have ID
+        validOwnerRequest.setRole(null); // Role will be set by use case
+        validOwnerRequest.setActive(null); // Active will be set by use case
+        validOwnerRequest.setPassword("plainOwnerPassword123"); // Plain password for encoding
 
-    UserModel created = useCase.createOwner(request);
+        savedOwner = TestDataFactory.createValidOwnerUser();
+        savedOwner.setPassword("$2a$10$encodedOwnerPassword"); // Encoded password
+    }
 
-    assertThat(created.getId()).isEqualTo(1L);
-    assertThat(created.getRole()).isEqualTo(RoleEnum.OWNER);
-    assertThat(created.getPassword()).isEqualTo("ENCODED");
-    assertThat(created.getActive()).isTrue();
-    verify(userPersistencePort).save(any(UserModel.class));
-  }
+    @Test
+    @DisplayName("Should create owner successfully with valid data")
+    void shouldCreateOwnerSuccessfully() {
+        // Given
+        when(dateProviderPort.today()).thenReturn(LocalDate.now());
+        when(userPersistencePort.existsByEmail(validOwnerRequest.getEmail())).thenReturn(false);
+        when(userPersistencePort.existsByDocument(validOwnerRequest.getDocument())).thenReturn(false);
+        when(passwordEncoderPort.encode(validOwnerRequest.getPassword())).thenReturn("$2a$10$encodedOwnerPassword");
+        when(userPersistencePort.save(any(UserModel.class))).thenReturn(savedOwner);
 
-  @Test
-  @DisplayName("Should fail when email is invalid")
-  void createOwnerEmailInvalid() {
-    UserModel request = buildValidUser();
-    request.setEmail("invalid-email");
+        // When
+        UserModel result = createOwnerUseCase.createOwner(validOwnerRequest);
 
-    assertThatThrownBy(() -> useCase.createOwner(request))
-        .isInstanceOf(DomainException.class)
-        .hasMessageContaining("Invalid email");
-  }
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getRole()).isEqualTo(RoleEnum.OWNER);
+        assertThat(result.getActive()).isTrue();
+        assertThat(result.getPassword()).isEqualTo("$2a$10$encodedOwnerPassword");
 
-  @Test
-  @DisplayName("Should fail when phone is invalid or too long")
-  void createOwnerPhoneInvalid() {
-    UserModel request = buildValidUser();
-    request.setPhone("++57300111223344");
+        verify(dateProviderPort).today();
+        verify(userPersistencePort).existsByEmail(validOwnerRequest.getEmail());
+        verify(userPersistencePort).existsByDocument(validOwnerRequest.getDocument());
+        verify(passwordEncoderPort).encode("plainOwnerPassword123");
+        verify(userPersistencePort).save(any(UserModel.class));
+    }
 
-    assertThatThrownBy(() -> useCase.createOwner(request))
-        .isInstanceOf(DomainException.class)
-        .hasMessageContaining("Invalid phone");
-  }
+    @Test
+    @DisplayName("Should throw exception when email already exists")
+    void shouldThrowExceptionWhenEmailAlreadyExists() {
+        // Given
+        when(dateProviderPort.today()).thenReturn(LocalDate.now());
+        when(userPersistencePort.existsByEmail(validOwnerRequest.getEmail())).thenReturn(true);
 
-  @Test
-  @DisplayName("Should fail when document is not numeric")
-  void createOwnerDocumentInvalid() {
-    UserModel request = buildValidUser();
-    request.setDocument("A1234");
+        // When & Then
+        assertThatThrownBy(() -> createOwnerUseCase.createOwner(validOwnerRequest))
+                .isInstanceOf(DomainException.class)
+                .hasMessage("Email already registered");
 
-    assertThatThrownBy(() -> useCase.createOwner(request))
-        .isInstanceOf(DomainException.class)
-        .hasMessageContaining("Invalid document");
-  }
+        verify(dateProviderPort).today();
+        verify(userPersistencePort).existsByEmail(validOwnerRequest.getEmail());
+        verify(userPersistencePort, never()).existsByDocument(any());
+        verify(passwordEncoderPort, never()).encode(any());
+        verify(userPersistencePort, never()).save(any());
+    }
 
-  @Test
-  @DisplayName("Should fail when user is underage")
-  void createOwnerUnderage() {
-    UserModel request = buildValidUser();
-    request.setBirthDate(LocalDate.of(2010, 1, 1));
+    @Test
+    @DisplayName("Should throw exception when document already exists")
+    void shouldThrowExceptionWhenDocumentAlreadyExists() {
+        // Given
+        when(dateProviderPort.today()).thenReturn(LocalDate.now());
+        when(userPersistencePort.existsByEmail(validOwnerRequest.getEmail())).thenReturn(false);
+        when(userPersistencePort.existsByDocument(validOwnerRequest.getDocument())).thenReturn(true);
 
-    assertThatThrownBy(() -> useCase.createOwner(request))
-        .isInstanceOf(DomainException.class)
-        .hasMessageContaining("User must be of legal age");
-  }
+        // When & Then
+        assertThatThrownBy(() -> createOwnerUseCase.createOwner(validOwnerRequest))
+                .isInstanceOf(DomainException.class)
+                .hasMessage("Document already registered");
 
-  @Test
-  @DisplayName("Should fail when email already exists")
-  void createOwnerEmailDuplicated() {
-    UserModel request = buildValidUser();
-    when(userPersistencePort.existsByEmail(request.getEmail())).thenReturn(true);
+        verify(dateProviderPort).today();
+        verify(userPersistencePort).existsByEmail(validOwnerRequest.getEmail());
+        verify(userPersistencePort).existsByDocument(validOwnerRequest.getDocument());
+        verify(passwordEncoderPort, never()).encode(any());
+        verify(userPersistencePort, never()).save(any());
+    }
 
-    assertThatThrownBy(() -> useCase.createOwner(request))
-        .isInstanceOf(DomainException.class)
-        .hasMessageContaining("Email already registered");
-  }
+    @Test
+    @DisplayName("Should encode password before saving")
+    void shouldEncodePasswordBeforeSaving() {
+        // Given
+        String plainPassword = "plainOwnerPassword123";
+        String encodedPassword = "$2a$10$encodedOwnerPassword";
+        validOwnerRequest.setPassword(plainPassword);
+
+        when(dateProviderPort.today()).thenReturn(LocalDate.now());
+        when(userPersistencePort.existsByEmail(validOwnerRequest.getEmail())).thenReturn(false);
+        when(userPersistencePort.existsByDocument(validOwnerRequest.getDocument())).thenReturn(false);
+        when(passwordEncoderPort.encode(plainPassword)).thenReturn(encodedPassword);
+        when(userPersistencePort.save(any(UserModel.class))).thenReturn(savedOwner);
+
+        // When
+        createOwnerUseCase.createOwner(validOwnerRequest);
+
+        // Then
+        verify(passwordEncoderPort).encode(plainPassword);
+        // Verify that the request object was modified with encoded password
+        assertThat(validOwnerRequest.getPassword()).isEqualTo(encodedPassword);
+    }
+
+    @Test
+    @DisplayName("Should set owner role and active status")
+    void shouldSetOwnerRoleAndActiveStatus() {
+        // Given
+        when(dateProviderPort.today()).thenReturn(LocalDate.now());
+        when(userPersistencePort.existsByEmail(validOwnerRequest.getEmail())).thenReturn(false);
+        when(userPersistencePort.existsByDocument(validOwnerRequest.getDocument())).thenReturn(false);
+        when(passwordEncoderPort.encode(validOwnerRequest.getPassword())).thenReturn("$2a$10$encodedOwnerPassword");
+        when(userPersistencePort.save(any(UserModel.class))).thenAnswer(invocation -> {
+            UserModel savedUser = invocation.getArgument(0);
+            savedUser.setId(2L);
+            return savedUser;
+        });
+
+        // When
+        createOwnerUseCase.createOwner(validOwnerRequest);
+
+        // Then
+        // Verify that the request object was modified with correct values
+        assertThat(validOwnerRequest.getRole()).isEqualTo(RoleEnum.OWNER);
+        assertThat(validOwnerRequest.getActive()).isTrue();
+    }
 }

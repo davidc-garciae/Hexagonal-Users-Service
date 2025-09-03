@@ -10,4 +10,8 @@ public interface IUserHandler {
   UserResponseDto createEmployee(UserEmployeeRequestDto request);
 
   UserResponseDto createCustomer(UserRequestDto request);
+
+  UserResponseDto getUserById(Long id);
+
+  boolean isEmployeeOfRestaurant(Long userId, Long restaurantId);
 }
